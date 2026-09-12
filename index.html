@@ -3,80 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Una flor para ti 🌻</title>
+  <title>Para ti 🌻</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #0e1018;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      color: #f1ede3;
-      font-family: sans-serif;
+      background: #0b0c10;
       overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      user-select: none;
     }
-    #info {
+    #canvas-container {
       position: absolute;
-      top: 20px;
-      text-align: center;
-      font-size: 18px;
-      color: #f0b429;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .hint-text {
+      position: absolute;
+      top: 12%;
+      color: #ffd700;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      z-index: 2;
       pointer-events: none;
+      transition: opacity 0.8s ease;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+    }
+    .card {
+      position: absolute;
+      bottom: -300px;
+      width: 88%;
+      max-width: 420px;
+      background: rgba(20, 24, 33, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 215, 0, 0.05);
+      z-index: 2;
+      text-align: center;
+      opacity: 0;
+      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    .card.show {
+      bottom: 8%;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .card h2 {
+      font-family: 'Caveat', cursive;
+      font-size: 2.3rem;
+      color: #fbd531;
+      margin-bottom: 10px;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      line-height: 1.6;
+      font-weight: 300;
     }
   </style>
 </head>
 <body>
 
-  <div id="info">Toca la pantalla para abrir la flor ✨</div>
+  <div class="hint-text" id="hint">✨ Toca la pantalla ✨</div>
+  <div id="canvas-container"></div>
+
+  <div class="card" id="card">
+    <h2>Una flor para alguien especial</h2>
+    <p>
+      Hay detalles simples que tienen la capacidad de iluminar cualquier día. 
+      Que esta flor amarilla te recuerde lo valiosa que eres y la luz bonita que transmites siempre. 🌻✨
+    </p>
+  </div>
 
   <script>
-    let size = 0;
-    let targetSize = 0;
+    let bloom = 0;
+    let targetBloom = 0;
+    let particles = [];
 
     function setup() {
-      createCanvas(windowWidth, windowHeight);
+      let canvas = createCanvas(windowWidth, windowHeight);
+      canvas.parent('canvas-container');
       angleMode(DEGREES);
+
+      for (let i = 0; i < 45; i++) {
+        particles.push({
+          x: random(width),
+          y: random(height),
+          size: random(1, 3),
+          speedY: random(0.2, 0.7),
+          alpha: random(100, 255)
+        });
+      }
     }
 
     function draw() {
-      background(14, 16, 24);
-      translate(width / 2, height / 2);
+      background(11, 12, 16);
 
-      // Suavizado del crecimiento al tocar
-      size = lerp(size, targetSize, 0.05);
-
-      // Dibujar tallo
-      stroke(46, 117, 89);
-      strokeWeight(8);
-      line(0, 0, 0, height / 2);
-
-      // Dibujar flor tipo girasol
+      // Partículas flotantes de fondo
       noStroke();
-      fill(236, 124, 82);
+      particles.forEach(p => {
+        fill(255, 215, 0, p.alpha);
+        circle(p.x, p.y, p.size);
+        p.y -= p.speedY;
+        if (p.y < 0) p.y = height;
+      });
 
-      let totalPetals = 160;
-      for (let i = 0; i < totalPetals; i++) {
-        let r = (i * 2) * (size / 100);
-        let angle = i * 137.5;
-        let x = r * cos(angle);
-        let y = r * sin(angle);
+      bloom = lerp(bloom, targetBloom, 0.035);
 
-        fill(240, 180, 41, 200);
-        ellipse(x, y, 12 * (size / 100), 12 * (size / 100));
+      push();
+      translate(width / 2, height * 0.52);
+
+      // Tallo curvo orgánico
+      stroke(34, 112, 62);
+      strokeWeight(7);
+      noFill();
+      beginShape();
+      vertex(0, 0);
+      quadraticVertex(-15, height * 0.2, 0, height * 0.45);
+      endShape();
+
+      // Hojas del tallo
+      if (bloom > 0.15) {
+        fill(34, 112, 62);
+        noStroke();
+        push();
+        translate(-8, height * 0.2);
+        rotate(-35);
+        ellipse(0, 0, 45 * bloom, 18 * bloom);
+        pop();
+
+        push();
+        translate(5, height * 0.28);
+        rotate(30);
+        ellipse(0, 0, 40 * bloom, 16 * bloom);
+        pop();
       }
 
-      // Centro de la flor
-      fill(80, 45, 22);
-      circle(0, 0, 30 * (size / 100));
+      // Capa de Pétalos (3 coronas)
+      drawPetalLayer(28, 110 * bloom, 26 * bloom, color(255, 183, 3), 0);
+      drawPetalLayer(20, 90 * bloom, 22 * bloom, color(255, 214, 10), 12);
+      drawPetalLayer(14, 65 * bloom, 18 * bloom, color(255, 230, 109), 24);
+
+      // Centro de la Flor
+      if (bloom > 0.05) {
+        stroke(60, 35, 15);
+        strokeWeight(2);
+        fill(80, 45, 18);
+        circle(0, 0, 60 * bloom);
+
+        // Textura del centro (Filotaxis)
+        noStroke();
+        fill(235, 150, 40, 220);
+        for (let i = 0; i < 70; i++) {
+          let r = (i * 0.32) * (bloom * 5);
+          let a = i * 137.5;
+          let x = r * cos(a);
+          let y = r * sin(a);
+          circle(x, y, 2.8 * bloom);
+        }
+      }
+
+      pop();
+    }
+
+    function drawPetalLayer(numPetals, length, widthPetal, petalColor, angleOffset) {
+      if (bloom <= 0.02) return;
+      noStroke();
+      fill(petalColor);
+      for (let i = 0; i < numPetals; i++) {
+        let angle = (360 / numPetals) * i + angleOffset;
+        push();
+        rotate(angle);
+        beginShape();
+        vertex(0, 0);
+        bezierVertex(-widthPetal / 2, -length * 0.35, -widthPetal / 2, -length * 0.85, 0, -length);
+        bezierVertex(widthPetal / 2, -length * 0.85, widthPetal / 2, -length * 0.35, 0, 0);
+        endShape(CLOSE);
+        pop();
+      }
     }
 
     function touchStarted() {
-      targetSize = 100;
-      document.getElementById('info').innerText = "🌻 ¡Para ti! 🌻";
+      if (targetBloom === 0) {
+        targetBloom = 1;
+        document.getElementById('hint').style.opacity = '0';
+        setTimeout(() => {
+          document.getElementById('card').classList.add('show');
+        }, 1200);
+      }
     }
 
     function mousePressed() {
